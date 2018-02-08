@@ -4,6 +4,7 @@ const {
   FeedbackService,
   submit,
   getTerms,
+  sanitizeTerms,
   getRequired,
   create,
   getAverageUserRating,
@@ -244,10 +245,39 @@ describe("feedback", () => {
   describe("sanitizeTerms", () => {
     // TODO: unit test this method
     it("should filter invalid terms", async () => {
-      // TODO: implement me
+      const data = _.cloneDeep(DATA);
+      const dataStore = new DataStore({ data });
+
+      const payload = {
+        bookingId: "bookingID1",
+        terms: {
+          term1: 1,
+          term2: 2,
+          term3: "3",
+          term4: 4,
+          term5: "5"
+        },
+        user: { __type: "Pointer", className: "_User", objectId: "userID" }
+      };
+      const validTerms = await sanitizeTerms(dataStore, payload);
+      should.exist(validTerms);
+      validTerms.should.eql({ term1: 1, term3: 3 });
     });
+
     it("should only allow values between 0 - 5", async () => {
-      // TODO: implement me
+      const data = _.cloneDeep(DATA);
+      const dataStore = new DataStore({ data });
+
+      const payload = {
+        bookingId: "bookingID1",
+        terms: {
+          term1: -1,
+          term3: 6
+        },
+        user: { __type: "Pointer", className: "_User", objectId: "userID" }
+      };
+      const validTerms = await sanitizeTerms(dataStore, payload);
+      validTerms.should.eql({ term1: 0, term3: 5 });
     });
   });
   describe("create", () => {

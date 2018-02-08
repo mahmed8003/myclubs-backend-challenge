@@ -5,6 +5,7 @@ import ApiError from "../lib/apiError";
 
 const CLASS_NAME = "UserFeedback";
 const TERM_CLASS_NAME = "UserFeedbackTerm";
+const BOOKING_CLASS_NAME = "Booking";
 
 const ERRORS = {
   ERROR: { code: 25000, message: "feedback error" },
@@ -39,11 +40,8 @@ class FeedbackService {
 }
 
 /*
-
     get all active bookings without feedback
-
 */
-
 const getLastBooking = async (dataStore, { user }) => {
   const userPtr = {
     __type: "Pointer",
@@ -57,11 +55,17 @@ const getLastBooking = async (dataStore, { user }) => {
     start: { $lt: Formats.parseDate(moment().subtract(2, "hours")) }
   };
   const { results } = await dataStore.query(
-    { type: "Booking", order: "-start", limit: 1, include: "partner,activity" },
+    {
+      type: BOOKING_CLASS_NAME,
+      order: "-start",
+      limit: 1,
+      include: "partner,activity"
+    },
     query
   );
   return results[0];
 };
+
 /*
   connect booking and feedback via pointers
 */
@@ -71,13 +75,14 @@ const connectBooking = async (dataStore, { feedback, bookingId }) => {
     className: CLASS_NAME,
     objectId: feedback.objectId
   };
-  const booking = await dataStore.getOne("Booking", bookingId);
+  const booking = await dataStore.getOne(BOOKING_CLASS_NAME, bookingId);
   booking.feedback = feedbackPtr;
 
-  const res = await dataStore.save("Booking", booking);
+  const res = await dataStore.save(BOOKING_CLASS_NAME, booking);
 
   return booking;
 };
+
 /*
   get bookings for which the user needs to provide feedback
 */
@@ -105,12 +110,14 @@ const submit = async (
 
   return feedback;
 };
+
 /*
   should cap the value to a number between 0 - 5
 */
 const capValue = value => {
   return Math.max(0, Math.min(5, Number(value)));
 };
+
 /*
   ensure only valid terms can be supplied
 */
@@ -130,6 +137,7 @@ const sanitizeTerms = async (dataStore, { terms, user, bookingId }) => {
   }
   return validTerms;
 };
+
 /*
   create a new feedback
 */
@@ -137,6 +145,9 @@ const create = async (
   dataStore,
   { user, bookingId, terms, source, comment, value }
 ) => {
+  if (!user) {
+    throw new ApiError(ERRORS.USER_REQUIRED);
+  }
   if (!bookingId) {
     throw new ApiError(ERRORS.BOOKING_REQUIRED);
   }
@@ -153,7 +164,7 @@ const create = async (
   };
   const bookingPtr = {
     __type: "Pointer",
-    className: "Booking",
+    className: BOOKING_CLASS_NAME,
     objectId: bookingId
   };
   const query = {
@@ -189,11 +200,11 @@ const create = async (
     TODO: refactor to use datastore.getOne with the activity include
 */
 const getBooking = async (dataStore, bookingId) => {
-  const { results } = await dataStore.query(
-    { type: "Booking", include: "activity" },
-    { objectId: bookingId }
-  );
-  return results[0];
+  const booking = await dataStore.getOne(BOOKING_CLASS_NAME, {
+    include: "activity",
+    objectId: bookingId
+  });
+  return booking;
 };
 
 /*
@@ -280,11 +291,9 @@ module.exports = {
   FeedbackService,
   getTerms,
   sanitizeTerms,
-  capValue,
   submit,
   getRequired,
   create,
-  capValue,
   getAverageUserRating,
   ERRORS
 };
