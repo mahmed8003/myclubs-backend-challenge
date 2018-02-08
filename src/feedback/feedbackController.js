@@ -9,6 +9,7 @@ class FeedbackController {
     this.router.post("/", this.submit);
     this.router.get("/terms", this.getTerms);
     this.router.get("/", this.getRequired);
+    this.router.get("/users/:userId", this.getAverageUserRating);
   }
   submit = async (req, res, next) => {
     try {
@@ -45,6 +46,16 @@ class FeedbackController {
         bookingId: req.params.bookingId
       };
       const json = await this.feedback.getTerms(data);
+      res.json(json);
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  getAverageUserRating = async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const json = await this.feedback.getAverageUserRating(userId);
       res.json(json);
     } catch (e) {
       next(e);

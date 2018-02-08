@@ -33,6 +33,9 @@ class FeedbackService {
   getRequired = async options => {
     return getRequired(this.dataStore, options);
   };
+  getAverageUserRating = async userId => {
+    return getAverageUserRating(this.dataStore, userId);
+  };
 }
 
 /*

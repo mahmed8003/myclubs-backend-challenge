@@ -4,8 +4,16 @@ import { app, express } from "./app";
 import { FeedbackService } from "./feedback/feedback";
 import DataStore from "../test/mocks/dataStore";
 import FeedbackController from "./feedback/feedbackController";
+import DATA from "../test/mocks/dummy";
 
-const dataStore = new DataStore({ data: {} });
+// dummy data for testing via http client
+let dataStore;
+if (process.env.NODE_ENV === "development") {
+  dataStore = new DataStore({ data: DATA });
+} else {
+  dataStore = new DataStore({});
+}
+
 const feedback = new FeedbackService({ dataStore });
 const feedbackController = new FeedbackController({ feedback });
 
