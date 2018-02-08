@@ -15,7 +15,8 @@ const ERRORS = {
     message: "feedback has already been provided"
   },
   VALUE_REQUIRED: { code: 25004, message: "value is required" },
-  BOOKING_NOT_FOUND: { code: 25005, message: "booking  not found" }
+  BOOKING_NOT_FOUND: { code: 25005, message: "booking  not found" },
+  FEEDBACK_NOT_FOUND: { code: 25006, message: "feedbacks not found" }
 };
 
 class FeedbackService {
@@ -214,8 +215,62 @@ const save = async (dataStore, feedback) => {
   return feedback;
 };
 
-const getAvargeUserRating = (dataStore, userId) => {
-  // TODO: implement me
+/*
+    get the average rating a user has provided
+*/
+const getAverageUserRating = async (dataStore, userId) => {
+  const userPtr = {
+    __type: "Pointer",
+    className: "_User",
+    objectId: userId
+  };
+
+  const query = {
+    user: userPtr
+  };
+
+  const { results } = await dataStore.query({ type: CLASS_NAME }, query);
+
+  /*
+  Why I didn't completed this way! 
+  Because I belevice even if it lookd fancier but it will be hard on memory and processing. 
+  - Filter function (clouser) returning a new array means extra memory consumption
+  - Map function then again returning new array means extra memoru consumption
+  - Reduce function 
+  - Anonyms functions are hard to optimize for V8 engine
+  const validFeedbacks = results.filter(feedback => feedback.hasOwnProperty('value'));
+  if (validFeedbacks.length == 0) {
+    throw new ApiError(ERRORS.FEEDBACK_NOT_FOUND);
+  }
+
+  const totalFeedbacksValue = validFeedbacks
+    .map(feedback => feedback.value)
+    .reduce((previousValue, currentValue) => previousValue + currentValue);
+
+  const rating = Math.round( (totalFeedbacksValue / validFeedbacks.length) * 10) / 10;
+  return {rating};
+  */
+
+  let totalValidFeedbacks = 0;
+  let totalFeedbacksValue = 0;
+
+  // This solution is simpler and much performant because in a single loop we are checking valid user feedbacks
+  // and calculating required values
+  for (let i = 0; i < results.length; i++) {
+    const feedback = results[i];
+    if (feedback.hasOwnProperty("value")) {
+      totalValidFeedbacks++;
+      totalFeedbacksValue += feedback.value;
+    }
+  }
+
+  if (totalValidFeedbacks == 0) {
+    throw new ApiError(ERRORS.FEEDBACK_NOT_FOUND);
+  }
+
+  const rating =
+    Math.round(totalFeedbacksValue / totalValidFeedbacks * 10) / 10;
+  return { rating };
 };
 
 module.exports = {
@@ -227,5 +282,6 @@ module.exports = {
   getRequired,
   create,
   capValue,
+  getAverageUserRating,
   ERRORS
 };

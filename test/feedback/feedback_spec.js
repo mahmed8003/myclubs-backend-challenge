@@ -6,6 +6,7 @@ const {
   getTerms,
   getRequired,
   create,
+  getAverageUserRating,
   ERRORS
 } = require("../../src/feedback/feedback");
 
@@ -97,6 +98,36 @@ describe("feedback", () => {
           __type: "Pointer",
           className: "Booking"
         },
+        user: USER_PTR
+      },
+      feedbackID2: {
+        objectId: "feedbackID2",
+        booking: {
+          objectId: "bookingID4",
+          __type: "Pointer",
+          className: "Booking"
+        },
+        value: 5,
+        user: USER_PTR
+      },
+      feedbackID3: {
+        objectId: "feedbackID3",
+        booking: {
+          objectId: "bookingID4",
+          __type: "Pointer",
+          className: "Booking"
+        },
+        value: 4,
+        user: USER_PTR
+      },
+      feedbackID4: {
+        objectId: "feedbackID4",
+        booking: {
+          objectId: "bookingID4",
+          __type: "Pointer",
+          className: "Booking"
+        },
+        value: 3,
         user: USER_PTR
       }
     },
@@ -210,15 +241,15 @@ describe("feedback", () => {
       data.Booking.bookingID1.feedback.objectId.should.equal(feedback.objectId);
     });
   });
-  describe('sanitizeTerms', ()=>{
+  describe("sanitizeTerms", () => {
     // TODO: unit test this method
-    it('should filter invalid terms', async()=>{
+    it("should filter invalid terms", async () => {
       // TODO: implement me
-    })
-    it('should only allow values between 0 - 5', async()=>{
+    });
+    it("should only allow values between 0 - 5", async () => {
       // TODO: implement me
-    })
-  })
+    });
+  });
   describe("create", () => {
     it("should allow a rating of 0", async () => {
       const data = _.cloneDeep(DATA);
@@ -292,7 +323,6 @@ describe("feedback", () => {
       }
     });
 
-
     it("should fail if the user has already created a feedback for this specific booking", async () => {
       const data = _.cloneDeep(DATA);
       const dataStore = new DataStore({ data });
@@ -326,6 +356,26 @@ describe("feedback", () => {
       feedback.booking.objectId.should.equal(payload.bookingId);
       feedback.user.objectId.should.equal(payload.user.objectId);
       feedback.comment.should.equal(payload.comment);
+    });
+
+    it("should calculate user average ratings", async () => {
+      const data = _.cloneDeep(DATA);
+      const dataStore = new DataStore({ data });
+      const value = await getAverageUserRating(dataStore, "userID");
+      should.exist(value);
+      should.exist(value.rating);
+      value.rating.should.equal(4);
+    });
+
+    it("should fail if user feebacks doesn't exists while calculate user average ratings", async () => {
+      const data = _.cloneDeep(DATA);
+      const dataStore = new DataStore({ data });
+      try {
+        const value = await getAverageUserRating(dataStore, "userID-XYZ");
+        should.not.exist(value);
+      } catch (e) {
+        e.code.should.equal(ERRORS.FEEDBACK_NOT_FOUND.code);
+      }
     });
   });
 });
