@@ -247,7 +247,7 @@ const getAverageUserRating = async (dataStore, userId) => {
 
   /*
   Why I didn't completed this way! 
-  Because I belevice even if it lookd fancier but it will be hard on memory and processing. 
+  Because I believe even if it lookd fancier but it will be hard on memory and processing. 
   - Filter function (clouser) returning a new array means extra memory consumption
   - Map function then again returning new array means extra memoru consumption
   - Reduce function 
